@@ -2,7 +2,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 
-from ot_agreement.create_paper_figures import plot_discrepancy_agreement
+from ot_agreement.create_paper_figures import get_distances_to_bounds, plot_discrepancy_agreement
+
+
+def test_score_distances_use_analytical_bounds():
+    """Classify exact boundary scores at ratios between grid points."""
+    data = get_distances_to_bounds([1 / 3, 3, 1 / 3], [0.4, 0.4, 0.401], lam=0.7, beta=0.9)
+    assert data["upper_bound"].tolist() == pytest.approx([0.4, 0.4, 0.4])
+    assert data["within_bounds"].tolist() == [True, True, False]
+    assert data["rel_dist_to_lower"].iloc[0] == pytest.approx(1.0)
 
 
 @pytest.mark.parametrize("scores", [(0.1, 0.1, 0.1), (0.1, 0.1, 0.2)])
