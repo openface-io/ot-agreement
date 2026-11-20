@@ -4,6 +4,16 @@ import pytest
 from ot_agreement.metrics import compute_ot_cost
 
 
+@pytest.mark.parametrize("beta", [1.0, 1, np.int64(1)])
+def test_ot_preserves_fractional_cost_with_integer_beta(beta):
+    """Use the same fractional spatial cost for integer and floating-point beta."""
+    first = np.array([[0.0, 0.0, 2.0, 1.0]])
+    second = np.array([[1.0, 0.0, 3.0, 1.0]])
+    labels = np.array([0])
+    cost = compute_ot_cost(first, labels, second, labels, lam=1.0, beta=beta, return_metric_only=True)
+    assert cost == pytest.approx(1 / 3)
+
+
 @pytest.mark.parametrize(
     "options",
     [{"beta": float("nan")}, {"beta": float("inf")}, {"label_dist": float("nan")}, {"label_dist": float("inf")}],

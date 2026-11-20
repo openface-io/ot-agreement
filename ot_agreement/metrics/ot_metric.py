@@ -72,7 +72,7 @@ def compute_ot_cost(
 
     n_1, n_2 = len(boxes_a), len(boxes_b)
     n_unmatched = abs(n_1 - n_2)
-    padded_cost = np.full((n_1 + 1, n_2 + 1), beta)
+    padded_cost = np.full((n_1 + 1, n_2 + 1), beta, dtype=float)
     padded_cost[:n_1, :n_2] = cost_matrix
 
     source_weights = np.ones(n_1 + 1)
