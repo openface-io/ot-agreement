@@ -24,3 +24,19 @@ def test_ot_rejects_nonfinite_cost_parameters(options):
     labels = np.empty(0, dtype=int)
     with pytest.raises(ValueError, match=next(iter(options))):
         compute_ot_cost(boxes, labels, boxes, labels, **options)
+
+
+def test_transport_plan_title_counts_boxes_matched_to_dummies(monkeypatch):
+    """Count unmatched boxes even when both sources contain the same number."""
+    titles = []
+
+    def capture_plot(*args, title, **kwargs):
+        titles.append(title)
+
+    monkeypatch.setattr("ot_agreement.metrics.ot_metric.plot_transport_plan", capture_plot)
+    first = np.array([[0.0, 0.0, 1.0, 1.0]])
+    second = np.array([[2.0, 0.0, 3.0, 1.0]])
+    labels = np.array([0])
+    _, _, unmatched_ratio, *_ = compute_ot_cost(first, labels, second, labels, plot_ot_plan=True, lam=1.0, beta=0.2)
+    assert unmatched_ratio == 1.0
+    assert "Unmatched: 2/2 boxes" in titles[0]

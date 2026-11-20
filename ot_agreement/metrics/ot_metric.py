@@ -71,7 +71,6 @@ def compute_ot_cost(
     cost_matrix = lam * spatial_dist_matr + (1 - lam) * label_dist_matr
 
     n_1, n_2 = len(boxes_a), len(boxes_b)
-    n_unmatched = abs(n_1 - n_2)
     padded_cost = np.full((n_1 + 1, n_2 + 1), beta, dtype=float)
     padded_cost[:n_1, :n_2] = cost_matrix
 
@@ -108,7 +107,7 @@ def compute_ot_cost(
             f"Spatial: {spatial_cost:.4f}  "
             f"Label: {label_cost:.4f}  "
             f"Unmatched: {unmatched_cost:.4f}\n"
-            f"Unmatched: {n_unmatched}/{n_1 + n_2} boxes "
+            f"Unmatched: {round(unmatched_mass)}/{n_1 + n_2} boxes "
             f"(ratio={unmatched_ratio:.2f})\n"
             f"Total cost: {total_cost:.4f}"
         )
