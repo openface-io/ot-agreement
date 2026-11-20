@@ -42,20 +42,16 @@ def get_bboxes(df, file_name):
     return np.hstack([coords, labels])
 
 
-def get_distances_to_bounds(N_vs_M_empirical, ot_scores, N_vs_M_theory, lower_bound, upper_bound):
-    """Get distances to metric bounds.
-
-    For each empirical point, find the closest N/M value in the theoretical grid
-    and compute the vertical distance to upper and lower bounds.
-    """
+def get_distances_to_bounds(N_vs_M_empirical, ot_scores, *, lam, beta):
+    """Compute distances to the analytical score bounds at each box-count ratio."""
     distances = []
 
-    for nm, score in zip(N_vs_M_empirical, ot_scores, strict=False):
-        # Find closest index in theoretical N/M array
-        idx = np.argmin(np.abs(N_vs_M_theory - nm))
-
-        lb = lower_bound[idx]
-        ub = upper_bound[idx]
+    for nm, score in zip(N_vs_M_empirical, ot_scores, strict=True):
+        matched_fraction = nm if nm <= 1 else 1 / nm
+        unmatched_cost = beta * (1 - matched_fraction)
+        lb = 1 - (unmatched_cost + lam * matched_fraction)
+        ub = 1 - unmatched_cost
+        width = ub - lb
 
         distances.append(
             {
@@ -65,10 +61,10 @@ def get_distances_to_bounds(N_vs_M_empirical, ot_scores, N_vs_M_theory, lower_bo
                 "upper_bound": ub,
                 "dist_to_lower": score - lb,  # positive = above lower bound
                 "dist_to_upper": ub - score,  # positive = below upper bound
-                "within_bounds": (score >= lb) and (score <= ub),
-                "band_width": ub - lb,
-                "rel_dist_to_upper": (ub - score) / (ub - lb),
-                "rel_dist_to_lower": (score - lb) / (ub - lb),
+                "within_bounds": lb - 1e-12 <= score <= ub + 1e-12,
+                "band_width": width,
+                "rel_dist_to_upper": (ub - score) / width if width else np.nan,
+                "rel_dist_to_lower": (score - lb) / width if width else np.nan,
             }
         )
 
@@ -617,7 +613,7 @@ def plot_discrepancy_agreement(
         axis.errorbar(
             group.level,
             group["mean"],
-            yerr=[group["mean"] - group["min"], group["max"] - group["mean"]],
+            yerr=np.maximum(0, [group["mean"] - group["min"], group["max"] - group["mean"]]),
             fmt="none",
             ecolor=color,
             elinewidth=1,
@@ -702,7 +698,7 @@ def plot_ot_vs_ratio_acne04(show=True):
                 "file_name": file_name,
                 "n_orig": len(bboxes_a),
                 "n_v2": len(bboxes_b),
-                "ot_score": round(ot_score, 4),
+                "ot_score": ot_score,
                 "spatial_cost": round(spatial_cost, 4),
                 "label_cost": round(label_cost, 4),
                 "unmatched_cost": round(unmatched_cost, 4),
@@ -773,7 +769,7 @@ def plot_ot_vs_ratio_acne04(show=True):
     # =============
     # Distribution between upper and lower bounds
     # Compute for each class
-    dist_result = get_distances_to_bounds(N_vs_M_exp, df_results["ot_score"], N_vs_M, lower_bound, upper_bound)
+    dist_result = get_distances_to_bounds(N_vs_M_exp, df_results["ot_score"], lam=LAM, beta=BETA)
 
     # Quick summary
     print(f"  Within bounds:     {dist_result['within_bounds'].sum()}/{len(dist_result)}")
@@ -897,7 +893,7 @@ def plot_ot_vs_ratio_texbig(show=True):
                     "annotator_b": annotator_b,
                     "n_orig": len(bboxes_a),
                     "n_v2": len(bboxes_b),
-                    "ot_score": round(ot_score, 4),
+                    "ot_score": ot_score,
                     "spatial_cost": round(spatial_cost, 4),
                     "label_cost": round(label_cost, 4),
                     "unmatched_cost": round(unmatched_cost, 4),
@@ -983,16 +979,16 @@ def plot_ot_vs_ratio_texbig(show=True):
     plt.xlim([-4.9, 4.9])
     plt.grid()
     plt.legend(fontsize=10)
-    plt.title("OT score, TexBig dataset, two annotators", fontsize=ax_text_fontsize)
+    plt.title("OT score, TexBiG dataset, two annotators", fontsize=ax_text_fontsize)
 
     plt.tick_params(axis="both", labelsize=ax_text_fontsize)
 
     _save_figure(score_figure, "texbig_ot_vs_ratio")
 
     # ==============
-    par_result = get_distances_to_bounds(N_vs_M_par, df_results_par["ot_score"], N_vs_M, lower_bound, upper_bound)
-    img_result = get_distances_to_bounds(N_vs_M_img, df_results_img["ot_score"], N_vs_M, lower_bound, upper_bound)
-    cap_result = get_distances_to_bounds(N_vs_M_cap, df_results_cap["ot_score"], N_vs_M, lower_bound, upper_bound)
+    par_result = get_distances_to_bounds(N_vs_M_par, df_results_par["ot_score"], lam=LAM, beta=BETA)
+    img_result = get_distances_to_bounds(N_vs_M_img, df_results_img["ot_score"], lam=LAM, beta=BETA)
+    cap_result = get_distances_to_bounds(N_vs_M_cap, df_results_cap["ot_score"], lam=LAM, beta=BETA)
 
     # Quick summary
     print(f"  Within bounds:     {par_result['within_bounds'].sum()}/{len(par_result)}")
@@ -1251,29 +1247,33 @@ def main(argv=None):
             plot_score_bounds(show=False)
             plt.close("all")
         if "matching" in args.figures:
+            plotted_matching = False
             for build in (plot_cdf, plot_prob_vs_noise):
                 try:
                     build(show=False)
+                    plotted_matching = True
                 except FileNotFoundError as exc:
                     print(f"Skipping matching curves: {exc}")
                 finally:
                     plt.close("all")
+            if not plotted_matching:
+                raise FileNotFoundError(f"No matching curves found in {RESULTS_DIR}")
         if "discrepancy" in args.figures:
+            discrepancy_dir = RESULTS_DIR / "discrepancy"
             groups = sorted(
-                {
-                    (f["dataset"], f["perturbation"], f["noise_type"])
-                    for f in _discrepancy_files(RESULTS_DIR / "discrepancy")
-                }
+                {(f["dataset"], f["perturbation"], f["noise_type"]) for f in _discrepancy_files(discrepancy_dir)}
             )
-            if not groups:
-                print(f"Skipping discrepancy plots: no results in {RESULTS_DIR / 'discrepancy'}")
+            plotted_discrepancy = False
             for dataset, operation, noise in groups:
                 try:
                     plot_discrepancy_agreement(dataset, operation, show=False, noise_type=noise)
+                    plotted_discrepancy = True
                 except FileNotFoundError as exc:
                     print(f"Skipping discrepancy plots: {exc}")
                 finally:
                     plt.close("all")
+            if not plotted_discrepancy:
+                raise FileNotFoundError(f"No usable discrepancy results in {discrepancy_dir}")
         if "comparison" in args.figures:
             plot_ot_vs_ratio_acne04(show=False)
             plot_ot_vs_ratio_texbig(show=False)

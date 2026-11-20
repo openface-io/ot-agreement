@@ -5,8 +5,11 @@ from __future__ import annotations
 
 import json
 import xml.etree.ElementTree as ET
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
 from pathlib import Path
+from shutil import copyfileobj
+from uuid import uuid4
 from zipfile import BadZipFile, ZipFile
 
 import numpy as np
@@ -182,15 +185,22 @@ TRANSFORMERS: dict[str, Callable[[Path], pd.DataFrame]] = {
 }
 
 
+@contextmanager
+def _staged_file(destination: Path) -> Iterator[Path]:
+    staged = destination.with_name(f".annotations-{uuid4().hex}.tmp")
+    staged.touch(exist_ok=False)
+    try:
+        yield staged
+    finally:
+        staged.unlink(missing_ok=True)
+
+
 def write_csv(df: pd.DataFrame, output_path: Path) -> None:
     """Write a DataFrame atomically to avoid leaving an incomplete CSV."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary_path = output_path.with_suffix(f"{output_path.suffix}.tmp")
-    try:
-        df.to_csv(temporary_path, index=False)
-        temporary_path.replace(output_path)
-    finally:
-        temporary_path.unlink(missing_ok=True)
+    with _staged_file(output_path) as staged:
+        df.to_csv(staged, index=False)
+        staged.replace(output_path)
 
 
 def unpack_raw_annotations(raw_dir: Path) -> None:
@@ -207,8 +217,17 @@ def unpack_raw_annotations(raw_dir: Path) -> None:
                     raise ValueError(f"Unsafe path in raw annotations archive: {member.filename}")
             extracted = 0
             for member in members:
-                if not member.is_dir() and not (raw_dir / member.filename).exists():
-                    archive.extract(member, raw_dir)
+                destination = raw_dir / member.filename
+                if member.is_dir() or destination.exists() or destination.is_symlink():
+                    continue
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                with _staged_file(destination) as staged:
+                    with archive.open(member) as source, staged.open("wb") as target:
+                        copyfileobj(source, target)
+                    try:
+                        destination.hardlink_to(staged)
+                    except FileExistsError:
+                        continue
                     extracted += 1
     except BadZipFile as exc:
         raise ValueError(f"Invalid raw annotations archive: {archive_path}") from exc

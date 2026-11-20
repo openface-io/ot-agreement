@@ -4,7 +4,7 @@ This paper studies an Optimal Transport metric for measuring agreement between
 object detection annotations, accounting for differences in object presence,
 bounding box location, and class labels.
 
-Link to the paper: [arXiv](https://arxiv.org/abs/2610.19912).
+Accepted to ACCV 2026. Read the [preprint on arXiv](https://arxiv.org/abs/2610.19912).
 
 ## Installation
 
@@ -39,11 +39,12 @@ print(f"OT cost: {cost:.4f}")
 Lower cost indicates closer agreement; identical annotations have zero cost.
 See [`ot_agreement/metrics/ot_metric.py`](ot_agreement/metrics/ot_metric.py) for details.
 
-## Reproducing the paper figures
+## Generating figures
 
-- Run both commands from the repository root, in order:
+Run both commands from a fresh checkout, in the order shown. The plotter
+discovers result CSVs in the data directory, including files from earlier runs.
 
-```python
+```bash
 # Unpack raw annotations and generate the experiment data.
 poetry run python -m ot_agreement.prepare_data.prepare_all_data
 
@@ -55,14 +56,16 @@ poetry run python -m ot_agreement.create_paper_figures
 - Missing raw files are automatically extracted from `ot_agreement/data/raw/raw_annotations.zip`. See the
 [dataset README](ot_agreement/data/README.md) for data sources.
 - Generated figures are saved as PDF and JPG files in `ot_agreement/data/paper_plots/`.
+- The plotting command covers the score bounds, matching curves, annotator comparisons, discrepancy curves, and face
+  example. Main-text Figure 5 requires a separate analysis.
 
 ## Citation
 
 ```bibtex
-@article{prokhorov2026quantifying,
+@inproceedings{prokhorov2026quantifying,
   title={Quantifying Annotation Agreement in Object Detection with Optimal Transport},
   author={Prokhorov, Kirill and Kalinin, Alexandr A},
-  journal={arXiv preprint arXiv:2610.19912},
+  booktitle={Asian Conference on Computer Vision (ACCV)},
   year={2026}
 }
 ```

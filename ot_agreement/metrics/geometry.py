@@ -28,7 +28,7 @@ def iou_matrix(boxes_a: np.ndarray, boxes_b: np.ndarray) -> np.ndarray:
     area_a = (boxes_a[:, 2] - boxes_a[:, 0]) * (boxes_a[:, 3] - boxes_a[:, 1])
     area_b = (boxes_b[:, 2] - boxes_b[:, 0]) * (boxes_b[:, 3] - boxes_b[:, 1])
     union = area_a[:, None] + area_b[None, :] - intersection
-    return intersection / np.maximum(union, 1e-8)
+    return np.divide(intersection, union, out=np.zeros_like(union), where=union > 0)
 
 
 def giou_matrix(boxes_a: np.ndarray, boxes_b: np.ndarray) -> np.ndarray:
@@ -54,11 +54,14 @@ def giou_matrix(boxes_a: np.ndarray, boxes_b: np.ndarray) -> np.ndarray:
     enclosing_y_2 = np.maximum(boxes_a[:, 3:4], boxes_b[:, 3:4].T)
     enclosing_area = (enclosing_x_2 - enclosing_x_1) * (enclosing_y_2 - enclosing_y_1)
 
-    iou = intersection / np.maximum(union, 1e-8)
-    return iou - (enclosing_area - union) / np.maximum(
+    iou = np.divide(intersection, union, out=np.zeros_like(union), where=union > 0)
+    enclosure_penalty = np.divide(
+        enclosing_area - union,
         enclosing_area,
-        1e-8,
+        out=np.zeros_like(enclosing_area),
+        where=enclosing_area > 0,
     )
+    return iou - enclosure_penalty
 
 
 __all__ = ["giou_matrix", "iou_matrix"]
