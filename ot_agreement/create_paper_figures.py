@@ -1251,29 +1251,33 @@ def main(argv=None):
             plot_score_bounds(show=False)
             plt.close("all")
         if "matching" in args.figures:
+            plotted_matching = False
             for build in (plot_cdf, plot_prob_vs_noise):
                 try:
                     build(show=False)
+                    plotted_matching = True
                 except FileNotFoundError as exc:
                     print(f"Skipping matching curves: {exc}")
                 finally:
                     plt.close("all")
+            if not plotted_matching:
+                raise FileNotFoundError(f"No matching curves found in {RESULTS_DIR}")
         if "discrepancy" in args.figures:
+            discrepancy_dir = RESULTS_DIR / "discrepancy"
             groups = sorted(
-                {
-                    (f["dataset"], f["perturbation"], f["noise_type"])
-                    for f in _discrepancy_files(RESULTS_DIR / "discrepancy")
-                }
+                {(f["dataset"], f["perturbation"], f["noise_type"]) for f in _discrepancy_files(discrepancy_dir)}
             )
-            if not groups:
-                print(f"Skipping discrepancy plots: no results in {RESULTS_DIR / 'discrepancy'}")
+            plotted_discrepancy = False
             for dataset, operation, noise in groups:
                 try:
                     plot_discrepancy_agreement(dataset, operation, show=False, noise_type=noise)
+                    plotted_discrepancy = True
                 except FileNotFoundError as exc:
                     print(f"Skipping discrepancy plots: {exc}")
                 finally:
                     plt.close("all")
+            if not plotted_discrepancy:
+                raise FileNotFoundError(f"No usable discrepancy results in {discrepancy_dir}")
         if "comparison" in args.figures:
             plot_ot_vs_ratio_acne04(show=False)
             plot_ot_vs_ratio_texbig(show=False)
