@@ -37,7 +37,7 @@ print(f"OT cost: {cost:.4f}")
 ```
 
 Lower cost indicates closer agreement; identical annotations have zero cost.
-See [`metrics/ot_metric.py`](metrics/ot_metric.py) for details.
+See [`ot_agreement/metrics/ot_metric.py`](ot_agreement/metrics/ot_metric.py) for details.
 
 ## Reproducing the paper figures
 
@@ -51,9 +51,9 @@ poetry run python -m ot_agreement.prepare_data.prepare_all_data
 poetry run python -m ot_agreement.create_paper_figures
 ```
 
-- Experiment settings and dataset paths are defined in `configs/paper_plots_repro.yaml`.
+- Experiment settings and dataset paths are defined in [`configs/paper_plots_repro.yaml`](configs/paper_plots_repro.yaml).
 - Missing raw files are automatically extracted from `ot_agreement/data/raw/raw_annotations.zip`. See the
-[dataset README](data/README.md) for data sources.
+[dataset README](ot_agreement/data/README.md) for data sources.
 - Generated figures are saved as PDF and JPG files in `ot_agreement/data/paper_plots/`.
 
 ## Citation
