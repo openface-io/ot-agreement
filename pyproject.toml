@@ -3,7 +3,7 @@ name = "ot_agreement"
 version = "0.1.0"
 description = "Optimal transport metrics for measuring object detection annotation agreement."
 authors = [
-    {name = "Kirill Prokhorov"},
+    {name = "Kirill Prokhorov", email = "prokhorov@openface.me"},
     {name = "Alexandr A. Kalinin"},
 ]
 
