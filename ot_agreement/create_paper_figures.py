@@ -617,7 +617,7 @@ def plot_discrepancy_agreement(
         axis.errorbar(
             group.level,
             group["mean"],
-            yerr=[group["mean"] - group["min"], group["max"] - group["mean"]],
+            yerr=np.maximum(0, [group["mean"] - group["min"], group["max"] - group["mean"]]),
             fmt="none",
             ecolor=color,
             elinewidth=1,
