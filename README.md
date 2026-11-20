@@ -39,9 +39,10 @@ print(f"OT cost: {cost:.4f}")
 Lower cost indicates closer agreement; identical annotations have zero cost.
 See [`ot_agreement/metrics/ot_metric.py`](ot_agreement/metrics/ot_metric.py) for details.
 
-## Reproducing the paper figures
+## Generating figures
 
-Run both commands from the repository root, in order:
+Run both commands from a fresh checkout, in the order shown. The plotter
+discovers result CSVs in the data directory, including files from earlier runs.
 
 ```bash
 # Unpack raw annotations and generate the experiment data.
@@ -55,6 +56,8 @@ poetry run python -m ot_agreement.create_paper_figures
 - Missing raw files are automatically extracted from `ot_agreement/data/raw/raw_annotations.zip`. See the
 [dataset README](ot_agreement/data/README.md) for data sources.
 - Generated figures are saved as PDF and JPG files in `ot_agreement/data/paper_plots/`.
+- The plotting command covers the score bounds, matching curves, annotator comparisons, discrepancy curves, and face
+  example. Main-text Figure 5 requires a separate analysis.
 
 ## Citation
 
