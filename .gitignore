@@ -1,0 +1,12 @@
+.venv
+*.csv
+*.jpeg
+*.jpg
+*.json
+*.pdf
+__pycache__
+*.pyc
+*.xml
+.ruff_cache/
+*.ipynb
+.env

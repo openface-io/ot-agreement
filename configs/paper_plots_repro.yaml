@@ -1,0 +1,91 @@
+# Config file with parameters for reproduction of paper plots
+
+# Paths are relative to this file. All gamma/levels values are percentages.
+data_dir: ../ot_agreement/data/
+
+datasets:
+  acne04_orig:
+    source: ../ot_agreement/data/raw/acne04/acne04_orig
+  acne04_v2:
+    source: ../ot_agreement/data/raw/acne04/Acne04-v2_annotations.json
+  acnescu:
+    source: ../ot_agreement/data/raw/acnescu/acnescu_orig
+  texbig_v1:
+    source: ../ot_agreement/data/raw/texbig_1.0/texbig_all_v1.0_gcpr.json
+
+metrics:
+  ot_1: {kind: ot_chance_corrected, lambda: 1.0, beta: 0.2}
+  ot_2: {kind: ot_chance_corrected, lambda: 0.8, beta: 0.5}
+  ot_3: {kind: ot_chance_corrected, lambda: 0.5, beta: 0.8}
+  f1: {kind: f1, iou_threshold: 0.5}
+  kalpha_unit: {kind: kalpha, iou_threshold: 0.5, transform: unit}
+  miou: {kind: miou}
+
+prepare: [acne04_orig, acne04_v2, acnescu, texbig_v1]
+
+# Only explicitly listed perturbations are generated. Keep these inputs aligned
+# with empirical/discrepancy below; the latter never generate their dependencies.
+perturbations:
+  - dataset: acne04_orig
+    operation: shift
+    noise_type: uniform
+    levels: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 130, 150, 200]
+    seeds: [42, 69, 420]
+  - dataset: acne04_orig
+    operation: shift
+    noise_type: gauss
+    levels: [10, 30, 50, 70, 90, 110, 130, 150, 200]
+    seeds: [42, 69, 420]
+  - dataset: acne04_orig
+    operation: drop
+    levels: {start: 10, stop: 90, step: 10}
+    seeds: [42, 69, 420]
+  - dataset: acnescu
+    operation: swap
+    levels: {start: 10, stop: 100, step: 10}
+    seeds: [42, 69, 420]
+
+theory:
+  noise_types: [uniform, gauss]
+  n_x: 50000
+  beta_scan:
+    gamma_percent: [30, 50, 110, 200]
+    beta: {start: 0.0, stop: 1.0, step: 0.01}
+  gamma_scan:
+    beta: [0.2, 0.5, 0.8]
+    gamma_percent: {start: 10.0, stop: 295.0, step: 5.0}
+
+empirical:
+  dataset: acne04_orig
+  noise_types: [uniform, gauss]
+  seeds: [42, 69, 420]
+  beta_scan:
+    gamma_percent: [30, 50, 110, 200]
+    beta: {start: 0.0, stop: 1.0, step: 0.05}
+  gamma_scan:
+    beta: [0.2, 0.5, 0.8]
+    gamma_percent: [10, 30, 50, 70, 90, 110, 130, 150, 200]
+
+discrepancy:
+  - dataset: acnescu
+    operation: swap
+    levels: {start: 10, stop: 100, step: 20}
+    seeds: [42, 69, 420]
+    metrics: [ot_2, ot_3, f1, kalpha_unit, miou]
+    n_expected_pairs: 1000
+    chance_sample_seed: 20260828
+  - dataset: acne04_orig
+    operation: drop
+    levels: {start: 10, stop: 90, step: 20}
+    seeds: [42, 69, 420]
+    metrics: [ot_2, f1, kalpha_unit, miou]
+    n_expected_pairs: 1000
+    chance_sample_seed: 20260828
+  - dataset: acne04_orig
+    operation: shift
+    noise_type: uniform
+    levels: [10, 20, 30, 40, 80, 130, 200]
+    seeds: [42, 69, 420]
+    metrics: [ot_1, ot_2, ot_3, f1, kalpha_unit, miou]
+    n_expected_pairs: 1000
+    chance_sample_seed: 20260828
