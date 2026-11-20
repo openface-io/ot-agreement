@@ -979,7 +979,7 @@ def plot_ot_vs_ratio_texbig(show=True):
     plt.xlim([-4.9, 4.9])
     plt.grid()
     plt.legend(fontsize=10)
-    plt.title("OT score, TexBig dataset, two annotators", fontsize=ax_text_fontsize)
+    plt.title("OT score, TexBiG dataset, two annotators", fontsize=ax_text_fontsize)
 
     plt.tick_params(axis="both", labelsize=ax_text_fontsize)
 
