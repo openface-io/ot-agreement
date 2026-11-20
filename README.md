@@ -4,7 +4,7 @@ This paper studies an Optimal Transport metric for measuring agreement between
 object detection annotations, accounting for differences in object presence,
 bounding box location, and class labels.
 
-Link to the paper: [arXiv](https://arxiv.org/abs/2610.19912).
+Accepted to ACCV 2026. Read the [preprint on arXiv](https://arxiv.org/abs/2610.19912).
 
 ## Installation
 
@@ -41,9 +41,9 @@ See [`ot_agreement/metrics/ot_metric.py`](ot_agreement/metrics/ot_metric.py) for
 
 ## Reproducing the paper figures
 
-- Run both commands from the repository root, in order:
+Run both commands from the repository root, in order:
 
-```python
+```bash
 # Unpack raw annotations and generate the experiment data.
 poetry run python -m ot_agreement.prepare_data.prepare_all_data
 
@@ -59,10 +59,10 @@ poetry run python -m ot_agreement.create_paper_figures
 ## Citation
 
 ```bibtex
-@article{prokhorov2026quantifying,
+@inproceedings{prokhorov2026quantifying,
   title={Quantifying Annotation Agreement in Object Detection with Optimal Transport},
   author={Prokhorov, Kirill and Kalinin, Alexandr A},
-  journal={arXiv preprint arXiv:2610.19912},
+  booktitle={Asian Conference on Computer Vision (ACCV)},
   year={2026}
 }
 ```
