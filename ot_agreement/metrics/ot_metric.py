@@ -58,10 +58,10 @@ def compute_ot_cost(
     boxes_b, labels_b = validate_annotations(boxes_b, labels_b, "annotations_b", require_positive_area=True)
     if not 0 <= lam <= 1:
         raise ValueError("lam must be in [0, 1]")
-    if beta < 0:
-        raise ValueError("beta must be non-negative")
-    if label_dist < 0:
-        raise ValueError("label_dist must be non-negative")
+    if not np.isfinite(beta) or beta < 0:
+        raise ValueError("beta must be finite and non-negative")
+    if not np.isfinite(label_dist) or label_dist < 0:
+        raise ValueError("label_dist must be finite and non-negative")
 
     spatial_dist_matr = (1 - giou_matrix(boxes_a, boxes_b)) / 2
 
