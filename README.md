@@ -57,7 +57,7 @@ poetry run python -m ot_agreement.create_paper_figures
 [dataset README](ot_agreement/data/README.md) for data sources.
 - Generated figures are saved as PDF and JPG files in `ot_agreement/data/paper_plots/`.
 - The plotting command covers the score bounds, matching curves, annotator comparisons, discrepancy curves, and face
-  example. Main-text Figure 5 requires a separate analysis.
+  example.
 
 ## Citation
 
