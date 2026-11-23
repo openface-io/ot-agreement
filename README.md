@@ -4,7 +4,7 @@ This paper studies an Optimal Transport metric for measuring agreement between
 object detection annotations, accounting for differences in object presence,
 bounding box location, and class labels.
 
-Accepted to ACCV 2026. Read the [preprint on arXiv](https://arxiv.org/abs/2610.19912).
+Accepted to [ACCV 2026](https://accv2026.org/). Read the [preprint on arXiv](https://arxiv.org/abs/2610.19912).
 
 ## Installation
 
