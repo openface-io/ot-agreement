@@ -58,10 +58,10 @@ def compute_ot_cost(
     boxes_b, labels_b = validate_annotations(boxes_b, labels_b, "annotations_b", require_positive_area=True)
     if not 0 <= lam <= 1:
         raise ValueError("lam must be in [0, 1]")
-    if beta < 0:
-        raise ValueError("beta must be non-negative")
-    if label_dist < 0:
-        raise ValueError("label_dist must be non-negative")
+    if not np.isfinite(beta) or beta < 0:
+        raise ValueError("beta must be finite and non-negative")
+    if not np.isfinite(label_dist) or label_dist < 0:
+        raise ValueError("label_dist must be finite and non-negative")
 
     spatial_dist_matr = (1 - giou_matrix(boxes_a, boxes_b)) / 2
 
@@ -71,8 +71,7 @@ def compute_ot_cost(
     cost_matrix = lam * spatial_dist_matr + (1 - lam) * label_dist_matr
 
     n_1, n_2 = len(boxes_a), len(boxes_b)
-    n_unmatched = abs(n_1 - n_2)
-    padded_cost = np.full((n_1 + 1, n_2 + 1), beta)
+    padded_cost = np.full((n_1 + 1, n_2 + 1), beta, dtype=float)
     padded_cost[:n_1, :n_2] = cost_matrix
 
     source_weights = np.ones(n_1 + 1)
@@ -108,7 +107,7 @@ def compute_ot_cost(
             f"Spatial: {spatial_cost:.4f}  "
             f"Label: {label_cost:.4f}  "
             f"Unmatched: {unmatched_cost:.4f}\n"
-            f"Unmatched: {n_unmatched}/{n_1 + n_2} boxes "
+            f"Unmatched: {round(unmatched_mass)}/{n_1 + n_2} boxes "
             f"(ratio={unmatched_ratio:.2f})\n"
             f"Total cost: {total_cost:.4f}"
         )

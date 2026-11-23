@@ -38,7 +38,7 @@ def shift_boxes(
     rng: np.random.Generator,
     noise_type: str = "uniform",
 ) -> pd.DataFrame:
-    """Shift every box by random offsets relative to its width and height."""
+    """Shift boxes by size-relative offsets and clip nonzero shifts to the image."""
     df = df.copy()
     n = len(df)
     box_w = (df["x_max"] - df["x_min"]).values
@@ -52,6 +52,9 @@ def shift_boxes(
         dy = rng.normal(0, max_shift_rel, n) * box_h
     else:
         raise ValueError("Invalid noise type")
+
+    if max_shift_rel == 0:
+        return df
 
     df["x_min"] = (df["x_min"] + dx).clip(lower=0, upper=df["image_width"] - 1).astype(int)
     df["x_max"] = (df["x_max"] + dx).clip(lower=1, upper=df["image_width"]).astype(int)

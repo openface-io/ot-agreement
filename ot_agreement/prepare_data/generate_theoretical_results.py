@@ -19,6 +19,7 @@ from ot_agreement.prepare_data.prepare_datasets import write_csv
 
 DEFAULT_N_X = 50_000
 EPSILON = 1e-6
+PROBABILITY_TOLERANCE = 1e-3
 
 DISTRIBUTIONS = ("uniform", "gauss")
 
@@ -191,7 +192,16 @@ def _probability(
         pdf_x=pdf_x,
         cdf_y=cdf_y,
     )
-    return probability_1 + probability_2 + probability_3
+    probability = probability_1 + probability_2 + probability_3
+    if not np.isfinite(probability):
+        raise FloatingPointError("Theoretical matching probability is non-finite")
+    if not -PROBABILITY_TOLERANCE <= probability <= 1.0 + PROBABILITY_TOLERANCE:
+        raise FloatingPointError(
+            f"Theoretical matching probability {probability!r} is outside [0, 1] "
+            f"beyond tolerance {PROBABILITY_TOLERANCE:g} "
+            f"(relative_noise={relative_noise:g}, distribution={distribution!r})"
+        )
+    return float(np.clip(probability, 0.0, 1.0))
 
 
 def generate_results(config: dict) -> list[Path]:
@@ -205,7 +215,8 @@ def generate_results(config: dict) -> list[Path]:
     beta_values = sorted(set(beta_scan.get("beta", [])) | set(gamma_scan.get("beta", [])))
     curves = {}
     for beta in tqdm(beta_values, desc="Theory: beta", unit="beta", dynamic_ncols=True):
-        boundary = model.boundaries(beta)
+        # With positive continuous noise, beta=0 allows only exact matches and beta=1 allows all matches.
+        boundary = None if beta in (0.0, 1.0) else model.boundaries(beta)
         for noise in tqdm(
             spec["noise_types"], desc=f"beta={beta:g}: noise", unit="distribution", leave=False, dynamic_ncols=True
         ):
@@ -215,7 +226,7 @@ def generate_results(config: dict) -> list[Path]:
             for gamma in tqdm(
                 sorted(gammas), desc=f"{noise}: gamma (%)", unit="point", leave=False, dynamic_ncols=True
             ):
-                value = _probability(boundary, gamma / 100, noise)
+                value = float(beta) if boundary is None else _probability(boundary, gamma / 100, noise)
                 if beta in beta_scan.get("beta", []) and gamma in beta_scan.get("gamma_percent", []):
                     suffix = "uni" if noise == "uniform" else "gauss"
                     name = f"theor_beta_shift_{suffix}_{number_token(gamma)}.csv"
