@@ -19,6 +19,7 @@ from ot_agreement.prepare_data.prepare_datasets import write_csv
 
 DEFAULT_N_X = 50_000
 EPSILON = 1e-6
+PROBABILITY_TOLERANCE = 1e-3
 
 DISTRIBUTIONS = ("uniform", "gauss")
 
@@ -194,6 +195,12 @@ def _probability(
     probability = probability_1 + probability_2 + probability_3
     if not np.isfinite(probability):
         raise FloatingPointError("Theoretical matching probability is non-finite")
+    if not -PROBABILITY_TOLERANCE <= probability <= 1.0 + PROBABILITY_TOLERANCE:
+        raise FloatingPointError(
+            f"Theoretical matching probability {probability!r} is outside [0, 1] "
+            f"beyond tolerance {PROBABILITY_TOLERANCE:g} "
+            f"(relative_noise={relative_noise:g}, distribution={distribution!r})"
+        )
     return float(np.clip(probability, 0.0, 1.0))
 
 
